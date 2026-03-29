@@ -1,0 +1,15 @@
+{
+  "name": "grudge-ai-hub",
+  "version": "1.0.0",
+  "description": "Grudge Studio AI Hub — Cloudflare Worker for ai.grudge-studio.com",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev --local",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
