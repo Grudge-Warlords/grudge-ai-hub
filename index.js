@@ -39,10 +39,10 @@ export default {
       // ── Router ─────────────────────────────────────────────────
 
       // Public routes
-      if (url.pathname === '/health' || url.pathname === '/v1/health') {
+      if (url.pathname === '/health' || url.pathname === '/v1/health' || url.pathname === '/api/health') {
         return corsResponse(await handleHealth(env), origin);
       }
-      if (url.pathname === '/v1/agents' && method === 'GET') {
+      if ((url.pathname === '/v1/agents' || url.pathname === '/api/agents') && method === 'GET') {
         return corsResponse(await handleListAgents(env), origin);
       }
 
@@ -76,8 +76,8 @@ export default {
 
       // ── Authenticated routes ───────────────────────────────────
 
-      // POST /v1/chat
-      if (url.pathname === '/v1/chat' && method === 'POST') {
+      // POST /v1/chat · POST /api/chat (fleet compatibility)
+      if ((url.pathname === '/v1/chat' || url.pathname === '/api/chat') && method === 'POST') {
         return corsResponse(await handleChat(request, env, auth, requestId, 'general'), origin);
       }
 
