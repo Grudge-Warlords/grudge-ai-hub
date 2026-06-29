@@ -35,6 +35,15 @@ MAX_PAYLOAD_BYTES        = "65536"
 pattern = "ai.grudge-studio.com/*"
 zone_id = "e8c0c2ee3063f24eb31affddabf9730a"
 
+# ── Durable Object migrations (legacy GameRoom removed from AI Hub) ───────────
+[[migrations]]
+tag = "v1"
+deleted_classes = [ "GameRoom" ]
+
+[[migrations]]
+tag = "v2"
+deleted_classes = [ "GameRoom" ]
+
 # ── Observability ────────────────────────────────────────────────────────────
 [observability]
 enabled = true
