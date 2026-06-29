@@ -12,6 +12,13 @@
  *   POST   /v1/agent/run            Agentic task runner (JWT)
  *   POST   /v1/orchestrator/run     Smart dev orchestrator (JWT)
  *   GET/POST /v1/pods               Dev pod registry (JWT)
+ *   GET    /v1/economy/balance      GBUX balance (JWT)
+ *   GET    /v1/economy/rewards      Pending rewards (JWT)
+ *   POST   /v1/economy/rewards/claim Claim reward (JWT)
+ *   GET    /v1/economy/ledger       Transaction history (JWT)
+ *   POST   /v1/economy/swap/quote   Swap quote (JWT)
+ *   POST   /v1/economy/swap/execute Execute swap (JWT)
+ *   POST   /v1/economy/transfer     GBUX transfer proxy (JWT)
  *   POST   /v1/chat                 General chat (auth)
  *   POST   /v1/agents/:role/chat    Role-specialized chat (auth)
  *   POST   /v1/image/generate       Image generation (auth)
@@ -23,6 +30,7 @@ import { authenticate } from './lib/auth.js';
 import { handleProjectsRouter } from './lib/projects.js';
 import { handleAgentRun, handleAgentRunGet } from './lib/agent.js';
 import { handleOrchestratorRun, handlePodsRouter } from './lib/orchestrator.js';
+import { handleEconomyRouter } from './lib/economy.js';
 
 export default {
   async fetch(request, env) {
@@ -145,6 +153,11 @@ export default {
         return corsResponse(podsRes, origin);
       }
 
+      const economyRes = await handleEconomyRouter(request, env, auth, url, method);
+      if (economyRes) {
+        return corsResponse(economyRes, origin);
+      }
+
       // ── Admin routes ───────────────────────────────────────────
       if (url.pathname.startsWith('/v1/admin')) {
         if (auth.scope !== 'admin') {
@@ -214,7 +227,7 @@ async function handleHealth(env) {
   return json({
     status: 'ok',
     service: 'grudge-ai-hub',
-    version: '1.2.0',
+    version: '1.3.0',
     environment: env.ENVIRONMENT,
     providers: {
       workers_ai: 'available',
