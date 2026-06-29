@@ -7,15 +7,19 @@
  * Routes:
  *   GET    /health                  Health check (public)
  *   GET    /v1/agents               List agent roles (public)
+ *   GET    /v1/auth/me              Current user (JWT session)
+ *   GET/POST /v1/projects           Project manager (JWT, private by default)
+ *   POST   /v1/agent/run            Agentic task runner (JWT)
  *   POST   /v1/chat                 General chat (auth)
  *   POST   /v1/agents/:role/chat    Role-specialized chat (auth)
  *   POST   /v1/image/generate       Image generation (auth)
  *   POST   /v1/embed                Text embeddings (auth)
  *   GET    /v1/admin/usage          Usage analytics (admin)
- *   GET    /v1/admin/health         Provider diagnostics (admin)
- *   GET    /v1/admin/config         Agent role config (admin)
- *   PUT    /v1/admin/config/:role   Update role config (admin)
  */
+
+import { authenticate } from './lib/auth.js';
+import { handleProjectsRouter } from './lib/projects.js';
+import { handleAgentRun, handleAgentRunGet } from './lib/agent.js';
 
 export default {
   async fetch(request, env) {
@@ -97,6 +101,37 @@ export default {
         return corsResponse(await handleEmbed(request, env, auth, requestId), origin);
       }
 
+      // GET /v1/auth/me — Grudge user session (JWT only)
+      if (url.pathname === '/v1/auth/me' && method === 'GET') {
+        if (!auth.userId) {
+          return corsResponse(json({ error: 'Grudge user session required' }, 401), origin);
+        }
+        return corsResponse(json({
+          ok: true,
+          user: {
+            userId: auth.userId,
+            grudgeId: auth.grudgeId,
+            username: auth.username,
+            scope: auth.scope,
+          },
+        }), origin);
+      }
+
+      // Projects API — GitHub-like repos, private by default
+      const projectRes = await handleProjectsRouter(request, env, auth, url, method);
+      if (projectRes) {
+        return corsResponse(projectRes, origin);
+      }
+
+      // Agentic runner
+      if (url.pathname === '/v1/agent/run' && method === 'POST') {
+        return corsResponse(await handleAgentRun(request, env, auth, requestId), origin);
+      }
+      const agentRunMatch = url.pathname.match(/^\/v1\/agent\/runs\/([^/]+)$/);
+      if (agentRunMatch && method === 'GET') {
+        return corsResponse(await handleAgentRunGet(env, auth, agentRunMatch[1]), origin);
+      }
+
       // ── Admin routes ───────────────────────────────────────────
       if (url.pathname.startsWith('/v1/admin')) {
         if (auth.scope !== 'admin') {
@@ -125,56 +160,6 @@ export default {
     }
   },
 };
-
-
-// ════════════════════════════════════════════════════════════════
-//  Authentication
-// ════════════════════════════════════════════════════════════════
-
-async function authenticate(request, env) {
-  const header = request.headers.get('Authorization') || '';
-  const apiKey = header.startsWith('Bearer ') ? header.slice(7) : header;
-
-  if (!apiKey) {
-    return { error: 'Missing Authorization header (Bearer <api-key>)' };
-  }
-
-  // Hash the key and look up in D1
-  const keyHash = await sha256(apiKey);
-
-  try {
-    const row = await env.DB.prepare(
-      'SELECT id, name, scope, tier, rpm_limit, enabled FROM api_keys WHERE key_hash = ?'
-    ).bind(keyHash).first();
-
-    if (!row) {
-      return { error: 'Invalid API key' };
-    }
-    if (!row.enabled) {
-      return { error: 'API key disabled' };
-    }
-
-    // Update last_used (fire and forget)
-    env.DB.prepare('UPDATE api_keys SET last_used = datetime(\'now\') WHERE id = ?')
-      .bind(row.id).run().catch(() => {});
-
-    return { keyId: row.id, name: row.name, scope: row.scope, tier: row.tier, rpmLimit: row.rpm_limit };
-  } catch (err) {
-    // D1 unavailable — allow with default limits if key matches env fallback
-    console.warn('D1 auth lookup failed, checking env fallback:', err.message);
-    const fallbackKey = env.VPS_INTERNAL_KEY;
-    if (fallbackKey && apiKey === fallbackKey) {
-      return { keyId: 'env-fallback', name: 'internal', scope: 'admin', tier: 'internal', rpmLimit: 300 };
-    }
-    return { error: 'Authentication service unavailable' };
-  }
-}
-
-async function sha256(text) {
-  const data = new TextEncoder().encode(text);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('');
-}
 
 
 // ════════════════════════════════════════════════════════════════

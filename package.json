@@ -1,6 +1,7 @@
 {
   "name": "grudge-ai-hub",
-  "version": "1.0.0",
+  "version": "1.1.0",
+  "type": "module",
   "description": "Grudge Studio AI Hub — Cloudflare Worker for ai.grudge-studio.com",
   "private": true,
   "scripts": {
