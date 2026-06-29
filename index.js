@@ -10,6 +10,8 @@
  *   GET    /v1/auth/me              Current user (JWT session)
  *   GET/POST /v1/projects           Project manager (JWT, private by default)
  *   POST   /v1/agent/run            Agentic task runner (JWT)
+ *   POST   /v1/orchestrator/run     Smart dev orchestrator (JWT)
+ *   GET/POST /v1/pods               Dev pod registry (JWT)
  *   POST   /v1/chat                 General chat (auth)
  *   POST   /v1/agents/:role/chat    Role-specialized chat (auth)
  *   POST   /v1/image/generate       Image generation (auth)
@@ -20,6 +22,7 @@
 import { authenticate } from './lib/auth.js';
 import { handleProjectsRouter } from './lib/projects.js';
 import { handleAgentRun, handleAgentRunGet } from './lib/agent.js';
+import { handleOrchestratorRun, handlePodsRouter } from './lib/orchestrator.js';
 
 export default {
   async fetch(request, env) {
@@ -132,6 +135,16 @@ export default {
         return corsResponse(await handleAgentRunGet(env, auth, agentRunMatch[1]), origin);
       }
 
+      // Smart dev orchestrator (terminal, npm, vscode, webgl, pods)
+      if (url.pathname === '/v1/orchestrator/run' && method === 'POST') {
+        return corsResponse(await handleOrchestratorRun(request, env, auth, requestId), origin);
+      }
+
+      const podsRes = await handlePodsRouter(request, env, auth, url, method);
+      if (podsRes) {
+        return corsResponse(podsRes, origin);
+      }
+
       // ── Admin routes ───────────────────────────────────────────
       if (url.pathname.startsWith('/v1/admin')) {
         if (auth.scope !== 'admin') {
@@ -201,7 +214,7 @@ async function handleHealth(env) {
   return json({
     status: 'ok',
     service: 'grudge-ai-hub',
-    version: '1.0.0',
+    version: '1.2.0',
     environment: env.ENVIRONMENT,
     providers: {
       workers_ai: 'available',
