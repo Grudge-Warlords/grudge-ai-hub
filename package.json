@@ -8,7 +8,9 @@
     "dev": "wrangler dev --local",
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging",
-    "tail": "wrangler tail"
+    "tail": "wrangler tail",
+    "workspace:build": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\grudgegit\\grudge-ai-hub/Build-Workspace.ps1\"",
+    "workspace:menu": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\grudgegit\\grudge-ai-hub/Project-Console.ps1\""
   },
   "devDependencies": {
     "wrangler": "^4.0.0"

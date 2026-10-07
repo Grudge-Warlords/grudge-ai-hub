@@ -1,0 +1,45 @@
+{
+  "id": "grudgegit/grudge-ai-hub",
+  "repository": "Grudge-Warlords/grudge-ai-hub",
+  "group": "grudgegit",
+  "name": "grudge-ai-hub",
+  "source": "C:\\grudgegit\\grudge-ai-hub",
+  "buildRoot": "D:\\grudgegit\\grudge-ai-hub",
+  "outputRoot": "E:\\grudgegit\\grudge-ai-hub",
+  "components": [
+    {
+      "id": "worker",
+      "label": "worker",
+      "relative": ".",
+      "output": "worker",
+      "kind": "worker",
+      "buildScript": null,
+      "launchScript": null,
+      "installer": false,
+      "requires": [
+        "Node.js and Wrangler"
+      ],
+      "notes": [
+        "Bundles with wrangler deploy --dry-run; launcher uses local wrangler dev. No remote deployment."
+      ],
+      "launchOptionOnBuildCompletion": true
+    }
+  ],
+  "packages": {
+    ".": {
+      "scripts": {
+        "dev": "wrangler dev --local",
+        "deploy": "wrangler deploy",
+        "deploy:staging": "wrangler deploy --env staging",
+        "tail": "wrangler tail"
+      },
+      "packageManager": null,
+      "name": "grudge-ai-hub"
+    }
+  },
+  "nativeEntries": [],
+  "preexistingTrackedChanges": [],
+  "releaseOnly": false,
+  "storageProfile": ".storage/profile.json",
+  "storageDevice": ".storage/device.json"
+}

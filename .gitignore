@@ -3,3 +3,6 @@ node_modules/
 .dev.vars
 .env
 *.log
+
+# This device only; public installers collect their own drive choices.
+.storage/device.json
